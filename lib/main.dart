@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:todo/modules/todo/data/models/task_model.dart';
 import 'package:todo/modules/todo/presentation/components/card_task.dart';
 
 void main() {
@@ -62,17 +63,16 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  TextEditingController taskController = TextEditingController();
+  List<TaskModel> tasks = [];
 
-  void _incrementCounter() {
+
+  Future<void> _deleteTask(TaskModel task) async {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      tasks.remove(task);
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -85,83 +85,112 @@ class _MyHomePageState extends State<MyHomePage> {
               color: Color(0xFF0D0D0D),
               child: Center(child: SvgPicture.asset('assets/logos/Logo.svg')),
             ),
-            Expanded(
-              child: Container(
-                color: Color(0xFF1A1A1A),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Transform.translate(
-                    offset: Offset(0, -35), // sobe 10 pixels
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: 60,
-                            child: TextField(
-                              style: TextStyle(
-                                color: Color(0xFFAAAAAA)
-                              ),
-                              cursorColor: Color(0xFF1E6F9F),
-                              decoration: InputDecoration(
-                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                                filled: true,
-                                fillColor: Color(0xFF262626), // fundo
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                  borderSide:
-                                      BorderSide.none, // remove borda padrão
-                                ),
-                                hintText: 'Digite algo...',
-                                hintStyle: TextStyle(
-                                  color: Color(0xFFAAAAAA), // cor do placeholder
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 8), // espaço entre input e botão
-
-                        SizedBox(
+            Container(
+              color: Color(0xFF1A1A1A),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Transform.translate(
+                  offset: Offset(0, -35), // sobe 10 pixels
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: SizedBox(
                           height: 60,
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-
-                              backgroundColor: Color(0xFF1E6F9F),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 18,
-                                ),
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                          child: TextField(
+                            controller: taskController,
+                            style: TextStyle(color: Color(0xFFAAAAAA)),
+                            cursorColor: Color(0xFF1E6F9F),
+                            decoration: InputDecoration(
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 20,
                               ),
-                              elevation: 0,
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-
-                              children: [
-                                Text(
-                                  'Enviar',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                SizedBox(width: 8),
-                                // espaçamento entre texto e ícone
-                                Icon(Icons.add_circle_outline, color: Colors.white),
-                              ],
+                              filled: true,
+                              fillColor: Color(0xFF262626),
+                              // fundo
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide:
+                                    BorderSide.none, // remove borda padrão
+                              ),
+                              hintText: 'Digite algo...',
+                              hintStyle: TextStyle(
+                                color: Color(0xFFAAAAAA), // cor do placeholder
+                                fontSize: 16,
+                              ),
                             ),
                           ),
                         ),
+                      ),
+                      SizedBox(width: 8), // espaço entre input e botão
 
-                      ],
-                    ),
+                      SizedBox(
+                        height: 60,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              TaskModel newTask = TaskModel(
+                                uuid: DateTime.now().millisecondsSinceEpoch
+                                    .toString(),
+                                description: taskController.text,
+                                done: false,
+                              );
+                              taskController.clear();
+                              tasks.add(newTask);
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF1E6F9F),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 18,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+
+                            children: [
+                              Text(
+                                'Enviar',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                              SizedBox(width: 8),
+                              // espaçamento entre texto e ícone
+                              Icon(
+                                Icons.add_circle_outline,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                color: Color(0xFF1A1A1A),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                      children: [
+                        ...tasks.map((task) => CardTask(
+                          task: task,
+                          deleteTask: _deleteTask,
+                        )),
+                      ]
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
