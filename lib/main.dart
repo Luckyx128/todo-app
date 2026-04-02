@@ -66,13 +66,11 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController taskController = TextEditingController();
   List<TaskModel> tasks = [];
 
-
   Future<void> _deleteTask(TaskModel task) async {
     setState(() {
       tasks.remove(task);
     });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -114,7 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 borderSide:
                                     BorderSide.none, // remove borda padrão
                               ),
-                              hintText: 'Digite algo...',
+                              hintText: 'Adicione uma nova tarefa',
                               hintStyle: TextStyle(
                                 color: Color(0xFFAAAAAA), // cor do placeholder
                                 fontSize: 16,
@@ -130,6 +128,9 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: ElevatedButton(
                           onPressed: () {
                             setState(() {
+                              if (taskController.text.isEmpty) {
+                                return;
+                              }
                               TaskModel newTask = TaskModel(
                                 uuid: DateTime.now().millisecondsSinceEpoch
                                     .toString(),
@@ -156,7 +157,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                             children: [
                               Text(
-                                'Enviar',
+                                'Criar',
                                 style: TextStyle(color: Colors.white),
                               ),
                               SizedBox(width: 8),
@@ -174,6 +175,44 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             ),
+            Container(
+              color: Color(0xFF1A1A1A),
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    Row(
+                      children: [
+                        Text('Tarefas criadas', style: TextStyle(color:Color(0xFF4EA8DE))),
+                        SizedBox(width: 8),
+                        Text(
+                          '${tasks.length}',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      ],
+                    ),
+                    Spacer(),
+                    Row(
+                      children: [
+                        Text('Concluidas', style: TextStyle(color: Color(0xFF8284FA))),
+                        SizedBox(width: 8),
+                        Container(
+                          color: Color(0xFF1E6F9F),
+                          child: Padding(
+                            padding: const EdgeInsets.all(3.0),
+                            child: Text(
+                              '${tasks.where((task) => task.done).length}',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                  ],
+                ),
+              ),
+            ),
             Expanded(
               child: Container(
                 width: double.infinity,
@@ -181,12 +220,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(
-                      children: [
-                        ...tasks.map((task) => CardTask(
-                          task: task,
-                          deleteTask: _deleteTask,
-                        )),
-                      ]
+                    children: [
+                      ...tasks.map(
+                        (task) => CardTask(task: task, deleteTask: _deleteTask),
+                      ),
+                    ],
                   ),
                 ),
               ),
