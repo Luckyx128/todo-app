@@ -16,4 +16,17 @@ class TaskModel extends Task {
       done: done
     };
   }
+
+  TaskModel copyWith({
+    String? uuid,
+    String? description,
+    bool? done,
+  }) {
+    return TaskModel(
+      uuid: uuid ?? this.uuid,
+      description: description ?? this.description,
+      done: done ?? this.done,
+    );
+  }
+
 }

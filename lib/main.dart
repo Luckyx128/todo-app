@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:todo/modules/todo/data/models/task_model.dart';
 import 'package:todo/modules/todo/presentation/components/card_task.dart';
+import 'package:todo/modules/todo/presentation/components/teste_title_number_indicator.dart';
 
 void main() {
   runApp(const MyApp());
@@ -62,19 +63,63 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
   TextEditingController taskController = TextEditingController();
   List<TaskModel> tasks = [];
+  final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
 
   Future<void> _deleteTask(TaskModel task) async {
+    int index = tasks.indexOf(task);
+    _listKey.currentState?.removeItem(
+      index,
+      (context, animation) => _buildAnimatedCard(task, animation, index),
+      duration: Duration(milliseconds: 300),
+    );
     setState(() {
       tasks.remove(task);
+    });
+    final snackBar = SnackBar(
+      content: const Text('Task deleted!'),
+      backgroundColor: Color(0xFF1E6F9F),
+      duration: Duration(seconds: 2),
+      behavior: SnackBarBehavior.floating,
+      // 👈 deixa flutuante
+      margin: EdgeInsets.all(16),
+      // 👈 espaço das bordas
+      shape: RoundedRectangleBorder(
+        // 👈 bordas arredondadas
+        borderRadius: BorderRadius.circular(12),
+      ),
+      elevation: 8,
+      action: SnackBarAction(
+        textColor: Colors.white,
+        label: 'Undo',
+        onPressed: () {
+          setState(() {
+            tasks.insert(index, task);
+            _listKey.currentState?.insertItem(index);
+          });
+        },
+      ),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  Future<void> handleCheckTask(int index, bool value) async {
+    TaskModel task = tasks[index];
+    setState(() {
+      tasks.remove(task);
+    });
+    tasks.remove(task);
+    TaskModel taskInvert = task.copyWith(done: !value);
+    setState(() {
+      tasks.insert(index, taskInvert);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(backgroundColor: Color(0xFF0D0D0D)),
       body: SafeArea(
         child: Column(
           children: [
@@ -138,7 +183,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                 done: false,
                               );
                               taskController.clear();
-                              tasks.add(newTask);
+                              tasks.insert(0, newTask);
+                              _listKey.currentState?.insertItem(0);
                             });
                           },
                           style: ElevatedButton.styleFrom(
@@ -181,34 +227,17 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
                   children: [
-                    Row(
-                      children: [
-                        Text('Tarefas criadas', style: TextStyle(color:Color(0xFF4EA8DE))),
-                        SizedBox(width: 8),
-                        Text(
-                          '${tasks.length}',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ],
+                    TesteTitleNumberIndicator(
+                      title: 'Tarefas criadas',
+                      cor: Color(0xFF4EA8DE),
+                      quantidade: tasks.length,
                     ),
                     Spacer(),
-                    Row(
-                      children: [
-                        Text('Concluidas', style: TextStyle(color: Color(0xFF8284FA))),
-                        SizedBox(width: 8),
-                        Container(
-                          color: Color(0xFF1E6F9F),
-                          child: Padding(
-                            padding: const EdgeInsets.all(3.0),
-                            child: Text(
-                              '${tasks.where((task) => task.done).length}',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                      ],
+                    TesteTitleNumberIndicator(
+                      title: 'Concluidas',
+                      cor: Color(0xFF8284FA),
+                      quantidade: tasks.where((task) => task.done).length,
                     ),
-
                   ],
                 ),
               ),
@@ -219,17 +248,60 @@ class _MyHomePageState extends State<MyHomePage> {
                 color: Color(0xFF1A1A1A),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    children: [
-                      ...tasks.map(
-                        (task) => CardTask(task: task, deleteTask: _deleteTask),
-                      ),
-                    ],
-                  ),
+                  child: tasks.isNotEmpty
+                      ? AnimatedList(
+                          key: _listKey,
+                          initialItemCount: tasks.length,
+                          itemBuilder: (context, index, animation) {
+                            return _buildAnimatedCard(
+                              tasks[index],
+                              animation,
+                              index,
+                            );
+                          },
+                        )
+                      : Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.assignment_outlined,
+                                size: 100,
+                                color: Color(0xFF333333),
+                              ),
+                              Text(
+                                "Você ainda não tem tarefas cadastradas",
+                                style: TextStyle(color: Color(0xFF808080)),
+                              ),
+                              Text(
+                                "Crie tarefas e organize seus itens a fazer",
+                                style: TextStyle(color: Color(0xFF333333)),
+                              ),
+                            ],
+                          ),
+                        ),
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedCard(
+    TaskModel task,
+    Animation<double> animation,
+    int index,
+  ) {
+    return SizeTransition(
+      sizeFactor: animation,
+      child: FadeTransition(
+        opacity: animation,
+        child: CardTask(
+          task: task,
+          deleteTask: _deleteTask,
+          handleCheckTask: handleCheckTask,
+          index: index,
         ),
       ),
     );
